@@ -6,7 +6,8 @@ from prompt import gerar_prompt
 
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_URL = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
+
 
 st.set_page_config(page_title="Mentor PBL", page_icon="🧠")
 
@@ -41,16 +42,33 @@ if st.session_state.fase == 'inicio':
 
                     if response.status_code == 200:
                         output = response.json()
+                        st.json(output)  # 👈 Mostra a resposta completa da API no Streamlit (útil para debug)
+
                         try:
-                            content = output['candidates'][0]['content']['parts'][0]['text']
+                            candidates = output.get("candidates", [])
+                            if not candidates:
+                                raise ValueError("Nenhuma resposta encontrada na API.")
+
+                            parts = candidates[0].get("content", {}).get("parts", [])
+                            if not parts:
+                                raise ValueError("Conteúdo da resposta está vazio.")
+
+                            content = parts[0].get("text", "")
+                            if not content:
+                                raise ValueError("Texto da resposta está vazio.")
+
+                            # Atualiza o estado com a resposta do Gemini
                             st.session_state.perguntas.append(content)
                             st.session_state.fase = 'esperando_resposta'
                             st.session_state.ultima_input = user_input
-                            st.experimental_rerun()
-                        except Exception:
-                            st.error("Erro ao interpretar resposta do Gemini.")
+                            st.rerun()
+
+
+                        except Exception as e:
+                            st.error(f"Erro ao interpretar resposta do Gemini: {e}")
                     else:
-                        st.error(f"Erro na API do Gemini: {response.status_code}")
+                        st.error(f"Erro na API do Gemini: código {response.status_code}")
+                        st.code(response.text, language="json")
 
 elif st.session_state.fase == 'esperando_resposta':
     st.subheader("2️⃣ Reflexão orientada")
@@ -78,7 +96,7 @@ elif st.session_state.fase == 'esperando_resposta':
                         content = output['candidates'][0]['content']['parts'][0]['text']
                         st.session_state.perguntas.append(content)
                         st.session_state.ultima_input = resposta
-                        st.experimental_rerun()
+                        st.rerun()
                     except Exception:
                         st.error("Erro ao interpretar resposta do Gemini.")
                 else:
@@ -89,4 +107,4 @@ if st.button("🔄 Reiniciar conversa"):
     st.session_state.fase = 'inicio'
     st.session_state.perguntas = []
     st.session_state.ultima_input = ""
-    st.experimental_rerun()
+    st.rerun()
