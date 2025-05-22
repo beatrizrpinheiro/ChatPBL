@@ -5,3 +5,12 @@ A proposta subverte o uso tradicional dos modelos de Inteligência Artificial (I
 
 
 ![image](https://github.com/user-attachments/assets/8a90886c-55c0-40bf-815f-2d9af64a57e4)
+
+# Orientações para rodar local
+
+pip install sreamlit
+pip install python-dotenv
+
+comando para rodar script:
+streamlit run main.py
+
